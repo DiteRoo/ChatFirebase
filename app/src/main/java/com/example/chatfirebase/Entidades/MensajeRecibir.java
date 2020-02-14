@@ -1,4 +1,6 @@
-package com.example.chatfirebase;
+package com.example.chatfirebase.Entidades;
+
+import com.example.chatfirebase.Entidades.Mensaje;
 
 public class MensajeRecibir extends Mensaje {
 

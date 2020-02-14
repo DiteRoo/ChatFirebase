@@ -4,9 +4,9 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.example.chatfirebase.Entidades.MensajeRecibir;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class AdapterMensajes extends RecyclerView.Adapter<HolderMensaje> {
             holder.getMensaje().setVisibility(View.VISIBLE);
         }
         if(listMensaje.get(position).getFotoPerfil().isEmpty()){
-            holder.getFotoMensajePerfil().setImageResource(R.mipmap.ic_launcher);
+            holder.getFotoMensajePerfil().setImageResource(R.drawable.user);
         }else{
             Glide.with(c).load(listMensaje.get(position).getFotoPerfil()).into(holder.getFotoMensajePerfil());
         }

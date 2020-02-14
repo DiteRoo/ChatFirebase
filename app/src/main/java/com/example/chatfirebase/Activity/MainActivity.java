@@ -1,11 +1,16 @@
-package com.example.chatfirebase;
+package com.example.chatfirebase.Activity;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -16,17 +21,33 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.example.chatfirebase.AdapterMensajes;
+import com.example.chatfirebase.Entidades.MensajeEnviar;
+import com.example.chatfirebase.Entidades.MensajeRecibir;
+import com.example.chatfirebase.Entidades.Usuario;
+import com.example.chatfirebase.R;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+
+import static java.lang.Boolean.FALSE;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,14 +58,25 @@ public class MainActivity extends AppCompatActivity {
     private Button btnEnviar;
     private AdapterMensajes adapter;
     private ImageButton btnEnviarFoto;
+    private Button Logout;
 
+    private FirebaseAuth mAuth;
     private FirebaseDatabase database;
     private DatabaseReference databaseReference;
+
     private FirebaseStorage storage;
+
     private StorageReference storageReference;
+
     private static final int PHOTO_SEND = 1;
     private static final int PHOTO_PERFIL = 2;
     private String fotoPerfilCadena;
+
+    private String NOMBRE_USUARIO;
+    private GoogleSignInClient mGoogleSignInClient;
+
+    private Boolean UPLOAD = true;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,20 +90,42 @@ public class MainActivity extends AppCompatActivity {
         btnEnviar = (Button) findViewById(R.id.btnEnviar);
         btnEnviarFoto = (ImageButton) findViewById(R.id.btnEnviarFoto);
         fotoPerfilCadena = "";
+        Logout = (Button) findViewById(R.id.logout);
 
         database = FirebaseDatabase.getInstance();
         databaseReference = database.getReference("chat");//Sala de chat (nombre)
+
         storage = FirebaseStorage.getInstance();
+        mAuth = FirebaseAuth.getInstance();
 
         adapter = new AdapterMensajes(this);
         LinearLayoutManager l = new LinearLayoutManager(this);
         rvMensajes.setLayoutManager(l);
         rvMensajes.setAdapter(adapter);
 
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        //Google
+        GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(this);
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+        //---------------------------------------------------------
+
+        Logout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FirebaseAuth.getInstance().signOut();
+                signOut();
+            }
+        });
+
         btnEnviar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                databaseReference.push().setValue(new MensajeEnviar(txtMensaje.getText().toString(),nombre.getText().toString(),fotoPerfilCadena,"1", ServerValue.TIMESTAMP));
+                databaseReference.push().setValue(new MensajeEnviar(txtMensaje.getText().toString(),NOMBRE_USUARIO,fotoPerfilCadena,"1", ServerValue.TIMESTAMP));
                 txtMensaje.setText("");
             }
         });
@@ -138,6 +192,25 @@ public class MainActivity extends AppCompatActivity {
         rvMensajes.scrollToPosition(adapter.getItemCount()-1);
     }
 
+    public static boolean verifyStoragePermissions(Activity activity) {
+        String[] PERMISSIONS_STORAGE = {
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+        };
+        int REQUEST_EXTERNAL_STORAGE = 1;
+        int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                    activity,
+                    PERMISSIONS_STORAGE,
+                    REQUEST_EXTERNAL_STORAGE
+            );
+            return false;
+        }else{
+            return true;
+        }
+    }
+
 
 
     //Cuando escogemos un item(una imagen), esta se guarde en la base de datos de firebase.
@@ -161,14 +234,15 @@ public class MainActivity extends AppCompatActivity {
                     while(!uri.isComplete());
                     Uri url = uri.getResult(); //Se obtiene la url de firebase.
                     //Toast.makeText(MainActivity.this,String.valueOf(url),Toast.LENGTH_LONG).show();
-                    MensajeEnviar m = new MensajeEnviar("Kevin te ha enviado una foto",url.toString(),nombre.getText().toString(),fotoPerfilCadena,"2",ServerValue.TIMESTAMP);
+                    MensajeEnviar m = new MensajeEnviar(NOMBRE_USUARIO+" te ha enviado una foto",url.toString(),nombre.getText().toString(),fotoPerfilCadena,"2",ServerValue.TIMESTAMP);
                     databaseReference.push().setValue(m);
                 }
             });
         }else if(requestCode == PHOTO_PERFIL && resultCode == RESULT_OK){
             Uri u = data.getData();
+            FirebaseUser currentUser = mAuth.getCurrentUser();
             storageReference = storage.getReference("foto_perfil");//imagenes_chat
-            final StorageReference fotoReferencia = storageReference.child(u.getLastPathSegment());
+            final StorageReference fotoReferencia = storageReference.child(currentUser.getUid());
             fotoReferencia.putFile(u).addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
@@ -177,12 +251,91 @@ public class MainActivity extends AppCompatActivity {
                     Uri url = uri.getResult();
                     fotoPerfilCadena = url.toString();
                     //MensajeEnviar(txtMensaje.getText().toString(),nombre.getText().toString(),fotoPerfilCadena,"1", ServerValue.TIMESTAMP
-                    MensajeEnviar m = new MensajeEnviar("Kevin ha actualizado su foto de perfil",url.toString(),nombre.getText().toString(),fotoPerfilCadena,"2",ServerValue.TIMESTAMP);
+                    MensajeEnviar m = new MensajeEnviar(NOMBRE_USUARIO +"ha actualizado su foto de perfil",url.toString(),nombre.getText().toString(),fotoPerfilCadena,"2",ServerValue.TIMESTAMP);
                     databaseReference.push().setValue(m);
                     Glide.with(MainActivity.this).load(url.toString()).into(fotoPerfil);
                 }
             });
         }
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if(currentUser!=null){
+            btnEnviar.setEnabled(false);
+            //Google
+            if (currentUser.getDisplayName()!=null) {
+                String name = currentUser.getDisplayName();
+                Uri photoUrl = currentUser.getPhotoUrl();
+                Glide.with(this).load(String.valueOf(photoUrl)).into(fotoPerfil);
+                fotoPerfilCadena = photoUrl.toString();
+                NOMBRE_USUARIO = name;
+                nombre.setText(name);
+                btnEnviar.setEnabled(true);
+            }
+            //----------------------------------------------
+           //Correo electronico
+            else {
+                btnEnviar.setEnabled(false);
+                DatabaseReference reference = database.getReference("Usuarios/" + currentUser.getUid());
+                reference.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Usuario usuario = dataSnapshot.getValue(Usuario.class);
+                        NOMBRE_USUARIO = usuario.getNombre();
+                        nombre.setText(NOMBRE_USUARIO);
+                        btnEnviar.setEnabled(true);
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+                if(UPLOAD) {
+                    storageReference = storage.getReference("foto_perfil");//imagenes_chat
+                    storageReference.child(currentUser.getUid()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri url) {
+                            // Got the download URL for 'users/me/profile.png'
+                            Glide.with(MainActivity.this).load(url.toString()).into(fotoPerfil);
+                            fotoPerfilCadena = url.toString();
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            Toast.makeText(MainActivity.this, "No tiene asignado una foto", Toast.LENGTH_LONG).show();
+                            // Handle any errors
+                        }
+                    });
+                    UPLOAD = false;
+                }
+            }
+            //-----------------------------------------------
+        }else{
+            Toast.makeText(this,"No se conecto el usuario", Toast.LENGTH_LONG).show();
+            goLoginScreen();
+        }
+    }
+
+
+    private void goLoginScreen() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
+    }
+    //Desconectarse de google
+    private void signOut() {
+        mGoogleSignInClient.signOut()
+                .addOnCompleteListener(this, new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        // ...
+                        goLoginScreen();
+                    }
+                });
     }
 
 }
