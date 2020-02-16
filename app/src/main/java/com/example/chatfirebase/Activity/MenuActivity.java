@@ -1,0 +1,62 @@
+package com.example.chatfirebase.Activity;
+
+import android.content.Intent;
+import android.os.Bundle;
+
+import android.view.View;
+import android.widget.Button;
+
+import com.example.chatfirebase.Persistencia.UsuarioDAO;
+import com.example.chatfirebase.R;
+import com.google.firebase.auth.FirebaseAuth;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+
+public class MenuActivity extends AppCompatActivity {
+
+    private Button btnVerUsuarios;
+    private Button btnCerrarSesion;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_menu);
+
+        btnVerUsuarios = findViewById(R.id.btnVerUsuarios);
+        btnCerrarSesion = findViewById(R.id.btnCerrarSesion);
+
+        btnVerUsuarios.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MenuActivity.this,VerUsuariosActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        btnCerrarSesion.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FirebaseAuth.getInstance().signOut();
+                returnLogin();
+            }
+        });
+
+    }
+
+    private void returnLogin(){
+        startActivity(new Intent(this, LoginActivity.class));
+        finish();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(UsuarioDAO.getInstancia().isUsuarioLogeado()){
+            //el usuario esta logeado y hacemos algo
+        }else{
+            returnLogin();
+        }
+    }
+
+}

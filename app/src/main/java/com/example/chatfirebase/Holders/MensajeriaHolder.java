@@ -1,13 +1,21 @@
-package com.example.chatfirebase;
+package com.example.chatfirebase.Holders;
+
 
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.chatfirebase.R;
+
 import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class HolderMensaje extends RecyclerView.ViewHolder {
+
+/**
+ * Created by buser on 04/09/2017. 04
+ */
+
+public class MensajeriaHolder extends RecyclerView.ViewHolder {
 
     private TextView nombre;
     private TextView mensaje;
@@ -15,7 +23,7 @@ public class HolderMensaje extends RecyclerView.ViewHolder {
     private CircleImageView fotoMensajePerfil;
     private ImageView fotoMensaje;
 
-    public HolderMensaje(View itemView) {
+    public MensajeriaHolder(View itemView) {
         super(itemView);
         nombre = (TextView) itemView.findViewById(R.id.nombreMensaje);
         mensaje = (TextView) itemView.findViewById(R.id.mensajeMensaje);

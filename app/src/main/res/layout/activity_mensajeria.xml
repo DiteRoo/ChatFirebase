@@ -5,45 +5,69 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Activity.MainActivity"
-    android:padding="5sp"
+    tools:context="com.example.chatfirebase.Activity.MenuActivity"
+    android:padding="0sp"
     android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="50dp"
+        android:orientation="horizontal"
+        android:background="#3B0B39">
+
+
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/fotoPerfil"
             android:layout_width="48sp"
             android:layout_height="48sp"
-            android:src="@drawable/user" />
+            android:src="@drawable/buser" />
 
         <TextView
             android:id="@+id/nombre"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_weight="1"
             android:paddingLeft="10dp"
-            android:text="User" />
-        <Button
-            android:id="@+id/logout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Salir"/>
+            android:text="User"
+            android:textColor="@android:color/white"/>
 
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end|center">
+
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/cerrarSesion"
+                android:layout_width="48sp"
+                android:layout_height="48sp"
+                android:clickable="true"
+                android:src="@drawable/iconexitfinal" />
+
+        </LinearLayout>
 
     </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_weight="1">
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMensajes"
+        android:background="@drawable/backgroundchat"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1">
     </androidx.recyclerview.widget.RecyclerView>
+    </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="#3B0B39"
         android:orientation="horizontal">
         <ImageButton
             android:id="@+id/btnEnviarFoto"
@@ -52,17 +76,23 @@
             android:background="@android:drawable/ic_menu_gallery"
             android:layout_gravity="center"
             />
+
         <EditText
             android:id="@+id/txtMensaje"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:hint="Escribe un mensaje"
-            android:layout_weight="1"/>
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white" />
 
         <Button
             android:id="@+id/btnEnviar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="Enviar"/>
+            android:background="@drawable/button_rounded_violeta"
+            android:hint="Enviar"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white" />
     </LinearLayout>
 </LinearLayout>
